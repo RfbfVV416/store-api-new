@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  pg_db:
+    image: my_postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=2812tyHx_8
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    container_name: my_pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: bebeshkomail@mail.ru
+      PGADMIN_DEFAULT_PASSWORD: 2812tyHx_8
+    ports:
+      - "5050:80"
