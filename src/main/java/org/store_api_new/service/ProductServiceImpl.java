@@ -20,15 +20,13 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public Product getById(Long productId){
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundEntityException("There is no product with id " + productId));
+    public boolean checkAvailability(Long quantity, Long productId){
+        return quantity <= getById(productId).getAvailable();
     }
 
     @Override
-    public void checkAvailability(Long quantity, Long available){
-        if (quantity > available){
-            throw new ProductOutOfStockException("Not enough products");
-        }
+    public Product getById(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundEntityException("There is no product with id " + productId));
     }
 }

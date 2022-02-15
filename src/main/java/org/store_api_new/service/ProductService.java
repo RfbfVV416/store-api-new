@@ -6,5 +6,5 @@ import java.util.List;
 public interface ProductService {
     List<Product> getAll();
     Product getById(Long productId);
-    void checkAvailability(Long quantity, Long available);
+    boolean checkAvailability(Long quantity, Long productId);
 }

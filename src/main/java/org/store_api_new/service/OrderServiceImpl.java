@@ -11,6 +11,7 @@ import org.store_api_new.dto.Item;
 import org.store_api_new.exception.EmptyCartOrderException;
 import org.store_api_new.exception.OrderModificationException;
 import org.store_api_new.exception.NotFoundEntityException;
+import org.store_api_new.exception.ProductOutOfStockException;
 import org.store_api_new.model.Order;
 import org.store_api_new.model.Product;
 import org.store_api_new.repository.OrderRepository;
@@ -18,7 +19,9 @@ import org.store_api_new.repository.ProductRepository;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+
 import static org.store_api_new.model.OrderStatus.CANCELED;
 import static org.store_api_new.model.OrderStatus.NEW;
 
@@ -40,12 +43,19 @@ public class OrderServiceImpl implements OrderService{
             throw new EmptyCartOrderException("Your cart is empty");
         }
 
+        List<Product> products = new ArrayList<>();
         BigDecimal subtotal = new BigDecimal(0);
+        Product updatedProduct;
+        Long quantity;
         for (Item item: cart.getCartItems()) {
-            subtotal = subtotal
-                    .add(updateProductIfPossible(item.getQuantity(), item.getProductId()).getPrice()
-                            .multiply(BigDecimal.valueOf(item.getQuantity())));
+            quantity = item.getQuantity();
+            updatedProduct = updateProductIfPossible(
+                    item.getQuantity(),
+                    productService.getById(item.getProductId())
+            );
+            subtotal = subtotal.add(updatedProduct.getPrice()).multiply(BigDecimal.valueOf(quantity));
         }
+        productRepository.saveAll(products);
 
         Order order = new Order();
         order.setOrderStatus(NEW);
@@ -57,12 +67,13 @@ public class OrderServiceImpl implements OrderService{
         return orderRepository.save(order);
     }
 
-    private Product updateProductIfPossible(Long quantity, Long productId){
-        Product product = productService.getById(productId);
+    private Product updateProductIfPossible(Long quantity, Product product){
         Long available = product.getAvailable();
-        productService.checkAvailability(quantity, available);
+        if (quantity > available){
+            throw new ProductOutOfStockException("Not enough products");
+        }
         product.setAvailable(available - quantity);
-        return productRepository.save(product);
+        return product;
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.store_api_new.dto.Item;
 import org.store_api_new.dto.OutputItem;
 import org.store_api_new.exception.EntityAlreadyExistsException;
 import org.store_api_new.exception.NotFoundEntityException;
+import org.store_api_new.exception.ProductOutOfStockException;
 import org.store_api_new.model.Product;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -44,7 +45,9 @@ public class CartServiceImpl implements CartService{
     @Override
     public Cart addItemToCart(Item item, HttpSession httpSession) {
         Cart cart = getCartFromSession(httpSession);
-        verifyItem(item);
+        if (!productService.checkAvailability(item.getQuantity(), item.getProductId())){
+            throw new ProductOutOfStockException("Not enough products available");
+        }
         if (!cart.addItem(item)){
             throw new EntityAlreadyExistsException("This item already exists");
         }
@@ -57,14 +60,11 @@ public class CartServiceImpl implements CartService{
         if (!cart.delItem(item)){
             throw new NotFoundEntityException("Item not found");
         }
-        verifyItem(item);
+        if (!productService.checkAvailability(item.getQuantity(), item.getProductId())){
+            throw new ProductOutOfStockException("Not enough products available");
+        }
         cart.addItem(item);
         return cart;
-    }
-
-    private void verifyItem(Item item){
-        Product product = productService.getById(item.getProductId());
-        productService.checkAvailability(item.getQuantity(), product.getAvailable());
     }
 
     @Override
